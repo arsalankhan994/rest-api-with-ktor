@@ -1,7 +1,10 @@
 package com.erselankhan.routes
 
+import com.erselankhan.constant.KeyConstant
+import com.erselankhan.constant.ResponseMessagesConstant
 import com.erselankhan.constant.RoutesConstant
 import com.erselankhan.model.UserEntity
+import com.erselankhan.util.replace
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -34,7 +37,7 @@ fun Route.userRouting() {
         }
         get("{id}") {
             if (testUserList.isNotEmpty()) {
-                val id = call.parameters["id"] ?: return@get missingIdParameter()
+                val id = call.parameters[KeyConstant.KEY_ID] ?: return@get missingIdParameter()
                 val userEntity = testUserList.find { it.id == id } ?: return@get userNotFoundResponse()
                 call.respond(status = HttpStatusCode.OK, userEntity)
             } else {
@@ -43,7 +46,7 @@ fun Route.userRouting() {
         }
         delete("{id}") {
             if(testUserList.isNotEmpty()) {
-                val id = call.parameters["id"] ?: return@delete missingIdParameter()
+                val id = call.parameters[KeyConstant.KEY_ID] ?: return@delete missingIdParameter()
                 val userEntity = testUserList.find { it.id == id } ?: return@delete userNotFoundResponse()
                 call.respond(status = HttpStatusCode.OK, userEntity)
             }
@@ -53,29 +56,27 @@ fun Route.userRouting() {
             if (!testUserList.contains(userEntity)) {
                 if (userEntity.password == userEntity.confirmPassword) {
                     testUserList.add(userEntity)
-                    call.respond(status = HttpStatusCode.OK, "User Created Successfully")
+                    call.respond(status = HttpStatusCode.OK, ResponseMessagesConstant.USER_CREATED_SUCCESSFULLY)
                 } else {
                     call.respond(status = HttpStatusCode.OK, "Some message")
                 }
             } else {
-                call.respond(status = HttpStatusCode.BadRequest, "User Already Exist")
+                call.respond(status = HttpStatusCode.BadRequest, ResponseMessagesConstant.USER_ALREADY_EXIST)
             }
         }
         put {
             val userEntity = call.receive<UserEntity>()
             val oldUserEntity = testUserList.find { it.id == userEntity.id }
             testUserList.replace(oldUserEntity, userEntity)
-            call.respond(status = HttpStatusCode.OK, "User Updated Successfully")
+            call.respond(status = HttpStatusCode.OK, ResponseMessagesConstant.USER_UPDATED_SUCCESSFULLY)
         }
     }
 }
 
 private suspend fun PipelineContext<Unit, ApplicationCall>.userNotFoundResponse() {
-    call.respondText(text = "Users not found", status = HttpStatusCode.NotFound)
+    call.respondText(text = ResponseMessagesConstant.USER_NOT_FOUND, status = HttpStatusCode.NotFound)
 }
 
-fun <E> Iterable<E>.replace(old: E, new: E) = map { if (it == old) new else it }
-
 private suspend fun PipelineContext<Unit, ApplicationCall>.missingIdParameter() {
-    call.respondText(text = "Missing id parameter", status = HttpStatusCode.BadRequest)
+    call.respondText(text = ResponseMessagesConstant.MISSING_ID_PARAMETER, status = HttpStatusCode.BadRequest)
 }
